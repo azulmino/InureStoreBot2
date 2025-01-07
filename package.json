@@ -11,6 +11,8 @@
   "description": "",
   "dependencies": {
     "discord.js": "^14.17.2",
-    "dotenv": "^16.4.7"
+    "dotenv": "^16.4.7",
+    "mysql2": "^3.12.0",
+    "puppeteer": "^23.11.1"
   }
 }
