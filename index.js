@@ -49,7 +49,7 @@ async function completarFormulario(link, numero, usuario) {
   // Intentar hasta que el formulario se envíe correctamente
   while (intentos < maxIntentos && !formularioEnviado) {
     try {
-      // Esperamos un poco antes de intentar obtener el número
+      // Esperamos a que el elemento que contiene el número esté disponible
       await page.waitForSelector('#IntroductionLabelText0', { visible: true, timeout: 5000 });
 
       // Obtener el valor actual
@@ -60,8 +60,9 @@ async function completarFormulario(link, numero, usuario) {
 
         // Completa los campos del formulario
         await page.type('#keyDesc', currentKey); // Usa la key actual
-        await page.type('#username', '@' + usuario); // Coloca solo '@' seguido del nombre de usuario
-        await page.type('#tshirtid0e028', link);
+        await page.type('#username', '@'); // Coloca solo '@' 
+        await page.evaluate(() => document.querySelector('#tshirtid0e028').value = ''); // Limpia el campo
+        await page.type('#tshirtid0e028', link); // Ingresa el link proporcionado
         await page.type('#redeemamount', String(numero));
 
         // Espera a que el botón con el texto 'Canjear clave' esté disponible
@@ -76,12 +77,11 @@ async function completarFormulario(link, numero, usuario) {
         });
 
         // Espera a que la página cargue después de enviar
-        await page.waitForNavigation();
+        await page.waitForNavigation({ waitUntil: 'domcontentloaded' });
 
         // Verificar si el formulario se envió correctamente
-        // Aquí puedes verificar algún texto o elemento que indique que el formulario fue exitoso
         const successMessage = await page.$eval('.success-message-selector', el => el.textContent);
-        if (successMessage.includes("Formulario enviado exitosamente")) {
+        if (successMessage && successMessage.includes("Formulario enviado exitosamente")) {
           console.log('Formulario enviado exitosamente');
           formularioEnviado = true;
         } else {
@@ -96,8 +96,10 @@ async function completarFormulario(link, numero, usuario) {
 
     intentos++;
 
-    // Esperar antes de intentar nuevamente
-    await page.waitForTimeout(2000); // Esperar 2 segundos
+    // Espera antes de intentar nuevamente, para no sobrecargar el servidor
+    if (!formularioEnviado) {
+      await page.waitForTimeout(2000); // Esperar 2 segundos
+    }
   }
 
   // Si después de varios intentos el formulario no se envía, mostramos un mensaje de error
@@ -121,6 +123,7 @@ async function completarFormulario(link, numero, usuario) {
 
   await browser.close();
 }
+
 
 // Pedidos
 async function procesarPedidos() {
